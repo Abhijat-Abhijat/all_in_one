@@ -1,14 +1,555 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        ::-webkit-scrollbar {
+            width: 10px;
+            
+        }
+        ::-webkit-scrollbar-track {
+            background: #fff;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1F3038;
+            border-radius: 1px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .mid {
+            height: 75vh;
+            margin: 2rem;
+            border-color: #231f20;
+        }
+
+        .mid1 {
+            height: 70vh;
+            margin: 1rem;
+            overflow: hidden;
+        }
+
+        .mid1:last-child {
+            width: 30%;
+            overflow-y: scroll;
+            /* background: #fff; */
+            color: #fff;
+            font-family: Lato, sans-serif;
+            /* background-color: #e4e4e4; */
+            /* overflow: hidden; */
+            margin-left: 1rem;
+            background-color: #213038;
+            border-radius: 10px;
+        }
+
+        .mid1:last-child p {
+            padding: 20px 0;
+        }
+
+        .mid1:last-child::-webkit-scrollbar-thumb {
+            /* display: none; */
+            border-radius: 10px;
+
+        }
+
+        .social {
+            border-radius: 10px;
+            padding: 0 20px;
+        }
+
+        .social a {
+            /* border-radius: 50%; */
+            /* background-color: white; */
+            font-size: 3rem;
+            /* width: 4rem; */
+            /* height: 4rem; */
+        }
+
+        .container {
+            display: block;
+            width: 400px;
+            margin: 10px auto 100px;
+            padding: 0px 10px 10px 10px;
+        }
+
+        h2 {
+            text-align: center;
+            padding-top: 10px;
+            margin-bottom: 0px;
+        }
+
+        ul {
+            margin: 0;
+            padding: 0;
+        }
+
+        li * {
+            float: left;
+        }
+
+        li,
+        h3 {
+            clear: both;
+            list-style: none;
+        }
+
+        input,
+        button {
+            outline: none;
+        }
+
+        button {
+            background: none;
+            border: 0px;
+            color: #888;
+            font-size: 15px;
+            width: 60px;
+            margin: 10px 0 0;
+            font-family: Lato, sans-serif;
+            cursor: pointer;
+
+        }
+
+        button:hover {
+            color: yellow;
+        }
+
+        /* Heading */
+
+        h3,
+        label[for="new-task"] {
+            color: #fff;
+            font-weight: 700;
+            font-size: 15px;
+            border-bottom: 2px solid #fff;
+            padding: 20px 0 10px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        input[type="text"] {
+            margin: 0;
+            font-size: 18px;
+            line-height: 18px;
+            height: 18px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background: #213038;
+            border-radius: 6px;
+            font-family: Lato, sans-serif;
+            color: #888;
+        }
+
+        input[type="text"]:focus {
+            color: #fff;
+        }
+
+        /* New Task */
+
+        label[for="new-task"] {
+            display: block;
+            margin: 0 0 20px;
+        }
+
+        input#new-task {
+            float: left;
+            width: 318px;
+        }
+
+        p>button:hover {
+            color: #0fc57c;
+        }
+
+        /* Task list */
+
+        li {
+            overflow: hidden;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        li>input[type="checkbox"] {
+            margin: 0 10px;
+            position: relative;
+            top: 15px;
+        }
+
+        li>label {
+            font-size: 18px;
+            line-height: 40px;
+            width: 237px;
+            padding: 0 0 0 11px;
+        }
+
+        li>input[type="text"] {
+            width: 226px;
+        }
+
+        li>.delete:hover {
+            color: #cf2323;
+        }
+
+        /* Completed */
+
+        #completed-tasks label {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        /* Edit Task */
+
+        ul li input[type="text"] {
+            display: none;
+        }
+
+        ul li.editMode input[type="text"] {
+            display: block;
+        }
+
+        ul li.editMode label {
+            display: none;
+        }
+    </style>
     <title>ALL_IN_ONE</title>
 </head>
-<body>
-    <iframe src="demo_iframe.htm" name="iframe_a" height="300px" width="100%" title="Iframe Example"></iframe>
 
-<p><a href="https://www.w3schools.com" target="iframe_a">W3Schools.com</a></p>
+<body class="font-mono block bg-black min-w-screen min-h-screen overflow-hidden">
+    <div class="grid-inline grid-rows-1 gap-px my-5 w-screen text-white font-bold tracking-widest h-12">
+        <a href="index.html"
+            class="mx-3 small-caps bg-red-500 float-left rounded-bl-full rounded-tr-full p-4 px-12 hover:text-black">HOME</a>
+        <a href="https://www.google.co.in/"
+            class="mx-3 bg-cyan-400 float-right rounded-bl-full rounded-tr-full p-4 px-12 hover:text-black"><i
+                class="fa-brands fa-chrome"></i> CHROME</a>
+        <a href="https://leetcode.com/"
+            class="mx-3 bg-cyan-400 float-right rounded-bl-full rounded-tr-full p-4 px-12 hover:text-black"><i
+                class="fa-solid fa-l"></i> LEETCODE</a>
+        <a href="https://www.udemy.com/"
+            class="mx-3 bg-cyan-400 float-right rounded-bl-full rounded-tr-full p-4 px-12 hover:text-black"><i
+                class="fa-solid fa-u"></i> UDEMY</a>
+        <a href="https://www.geeksforgeeks.org/"
+            class="mx-3 bg-cyan-400 float-right rounded-bl-full rounded-tr-full p-4 px-12 hover:text-black"><i
+                class="fa-solid fa-g"></i> GFG</a>
+        <a href="https://www.canva.com/"
+            class="mx-3 bg-cyan-400 float-right rounded-bl-full rounded-tr-full p-4 px-12 hover:text-black"><i
+                class="fa-solid fa-c"></i> CANVA</a>
+    </div>
+    <div class="justify-center place-content-center">
+        <div class="mid mx-auto w-3/4 border-4 text-white">
+            <div class="mid1 mx-auto w-2/3 text-white inline-block overflow-y-scroll">
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+                <div class="mx-10 my-5 w-2/5 inline-block rounded bg-gray-800">
+                    <h5 class="float-left font-bold tracking-widest mx-1 my-2 w-5/6 h-6 overflow-hidden ">Coursera</h5>
+                    <a href="http://" class="float-right p-2 rounded hover:text-black bg-cyan-400 ">OPEN</a>
+                </div>
+
+            </div>
+            <div class="mid1 mx-auto text-white inline-block">
+                <div class="container">
+                    <h2>TODO LIST</h2>
+                    <h3>Add Item</h3>
+                    <p><input id="new-task" type="text" /><button>Add</button></p>
+                    <h3>Todo</h3>
+                    <ul id="incomplete-tasks">
+                    </ul>
+                    <h3>Completed</h3>
+                    <ul id="completed-tasks">
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="social justify-items-center justify-self-center mx-auto w-2/4">
+            <a href="https://www.instagram.com" class="mx-5 w-4 bg-transparent text-white hover:text-red-500"><i
+                    class="fa-brands fa-instagram"></i></a>
+            <a href="https://www.facebook.com/?ref=logo"
+                class="mx-5 w-4 bg-transparent text-white hover:text-blue-500"><i
+                    class="fa-brands fa-facebook-f"></i></a>
+            <a href="https://twitter.com/login" class="mx-5 w-4 bg-transparent text-white hover:text-blue-400"><i
+                    class="fa-brands fa-twitter"></i></a>
+            <a href="https://www.linkedin.com/login" class="mx-5 w-4 bg-transparent text-white hover:text-blue-600"><i
+                    class="fa-brands fa-linkedin-in"></i></a>
+            <a href="https://mail.google.com/mail/" class="mx-5 w-4 bg-transparent text-white hover:text-red-500"><i
+                    class="fa-solid fa-envelope"></i></a>
+            <a href="https://www.reddit.com/" class="mx-5 w-4 bg-transparent text-white hover:text-orange-400"><i
+                    class="fa-brands fa-reddit-alien"></i></a>
+            <a href="https://github.com/" class="mx-5 w-4 bg-transparent text-white hover:text-black"><i
+                    class="fa-brands fa-github hover:bg-white hover:rounded-full"></i></a>
+            <a href="https://ide.codingminutes.com/" class="mx-5 w-4 bg-transparent text-white hover:text-green-500"><i
+                    class="fa-solid fa-code"></i></a>
+            <a href="https://www.youtube.com/" class="mx-5 w-4 bg-transparent text-white hover:text-red-700"><i
+                    class="fa-brands fa-youtube"></i></a>
+        </div>
+    </div>
+
+    <script src="https://kit.fontawesome.com/d9214ba709.js" crossorigin="anonymous"></script>
+    <script>
+        var taskInput = document.getElementById("new-task"); //new-task
+        var addButton = document.getElementsByTagName("button")[0]; //first button
+        var incompleteTasksHolder = document.getElementById("incomplete-tasks"); //incomplete-tasks
+        var completedTasksHolder = document.getElementById("completed-tasks"); //completed-tasks
+
+        //New Task List Item
+        var createNewTaskElement = function (taskString) {
+            //Create List Item
+            var listItem = document.createElement("li");
+
+            //input (checkbox)
+            var checkBox = document.createElement("input"); // checkbox
+            //label
+            var label = document.createElement("label");
+            //input (text)
+            var editInput = document.createElement("input"); // text
+            //button.edit
+            var editButton = document.createElement("button");
+            //button.delete
+            var deleteButton = document.createElement("button");
+
+            //Each element needs modifying
+
+            checkBox.type = "checkbox";
+            editInput.type = "text";
+
+            editButton.innerText = "Edit";
+            editButton.className = "edit";
+            deleteButton.innerText = "Delete";
+            deleteButton.className = "delete";
+
+            label.innerText = taskString;
+
+            //Each element needs appending
+            listItem.appendChild(checkBox);
+            listItem.appendChild(label);
+            listItem.appendChild(editInput);
+            listItem.appendChild(editButton);
+            listItem.appendChild(deleteButton);
+
+            return listItem;
+        }
+
+        //Add a new task
+        var addTask = function () {
+            console.log("Add task...");
+            //Create a new list item with the text from #new-task:
+            var listItem = createNewTaskElement(taskInput.value);
+            //Append listItem to incompleteTasksHolder
+            incompleteTasksHolder.appendChild(listItem);
+            bindTaskEvents(listItem, taskCompleted);
+
+            taskInput.value = "";
+        }
+
+        //Edit an existing task
+        var editTask = function () {
+            console.log("Edit task...");
+
+            var listItem = this.parentNode;
+
+            var editInput = listItem.querySelector("input[type=text");
+            var label = listItem.querySelector("label");
+
+            var containsClass = listItem.classList.contains("editMode");
+
+            //if the class of the parent is .editMode
+            if (containsClass) {
+                //Switch from .editMode
+                //label text become the input's value
+                label.innerText = editInput.value;
+            } else {
+                //Switch to .editMode
+                //input value becomes the label's text
+                editInput.value = label.innerText;
+            }
+
+            //Toggle .editMode on the list item
+            listItem.classList.toggle("editMode");
+
+        }
+
+        //Delete an existing task
+        var deleteTask = function () {
+            console.log("Delete task...");
+            var listItem = this.parentNode;
+            var ul = listItem.parentNode;
+
+            //Remove the parent list item from the ul
+            ul.removeChild(listItem);
+        }
+
+        //Mark a task as complete
+        var taskCompleted = function () {
+            console.log("Task complete...");
+            //Append the task list item to the #completed-tasks
+            var listItem = this.parentNode;
+            completedTasksHolder.appendChild(listItem);
+            bindTaskEvents(listItem, taskIncomplete);
+        }
+
+        //Mark a task as incomplete
+        var taskIncomplete = function () {
+            console.log("Task incomplete...");
+            //Append the task list item to the #incomplete-tasks
+            var listItem = this.parentNode;
+            incompleteTasksHolder.appendChild(listItem);
+            bindTaskEvents(listItem, taskCompleted);
+        }
+
+        var bindTaskEvents = function (taskListItem, checkBoxEventHandler) {
+            console.log("Bind list item events");
+            //select taskListItem's children
+            var checkBox = taskListItem.querySelector("input[type=checkbox]");
+            var editButton = taskListItem.querySelector("button.edit");
+            var deleteButton = taskListItem.querySelector("button.delete");
+
+            //bind editTask to edit button
+            editButton.onclick = editTask;
+
+            //bind deleteTask to delete button
+            deleteButton.onclick = deleteTask;
+
+            //bind checkBoxEventHandler to checkbox
+            checkBox.onchange = checkBoxEventHandler;
+        }
+
+        // var ajaxRequest = function() {
+        // 	console.log("AJAX request");
+        // }
+
+        //Set the click handler to the addTask function
+        addButton.addEventListener("click", addTask);
+        //addButton.addEventListener("click", ajaxRequest);
+
+        //cycle over incompleteTasksHolder ul list items
+        for (var i = 0; i < incompleteTasksHolder.children.length; i++) {
+            //bind events to list item's children (taskCompleted)
+            bindTaskEvents(incompleteTasksHolder.children[i], taskCompleted);
+        }
+
+        //cycle over completedTasksHolder ul list items
+        for (var i = 0; i < completedTasksHolder.children.length; i++) {
+            //bind events to list item's children (taskIncomplete)
+            bindTaskEvents(completedTasksHolder.children[i], taskIncomplete);
+        }
+    </script>
 </body>
+
 </html>
