@@ -1,0 +1,200 @@
+<!-- PREMIUM TRELLO-STYLE WITH ANIMATIONS -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All In One</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://kit.fontawesome.com/d9214ba709.js"></script>
+
+    <style>
+        body {
+            background: #0f172a;
+        }
+
+        /* Smooth transitions */
+        * {
+            transition: all 0.25s ease;
+        }
+
+        /* Card hover */
+        .card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Button hover */
+        button:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+
+        /* Input focus glow */
+        input:focus,
+        textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #22d3ee;
+        }
+
+        /* Column scroll polish */
+        ::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="text-white font-sans">
+
+    <!-- HEADER -->
+    <div class="bg-gray-900 p-4 flex justify-between items-center shadow">
+        <h1 class="text-xl font-bold tracking-wide">All-in-One</h1>
+        <input id="search" placeholder="Search links..." class="bg-gray-800 px-3 py-1 rounded">
+    </div>
+
+    <!-- MAIN -->
+    <div class="flex gap-4 p-4 overflow-x-auto h-[90vh]">
+
+        <!-- LINKS COLUMN -->
+        <div class="bg-gray-800 rounded-xl p-3 w-80 flex-shrink-0">
+            <h2 class="font-bold mb-2">Links</h2>
+            <div id="links" class="space-y-2"></div>
+
+            <div class="mt-3 space-y-1">
+                <input id="name" placeholder="Name" class="w-full p-1 bg-gray-700 rounded">
+                <input id="url" placeholder="URL" class="w-full p-1 bg-gray-700 rounded">
+                <input id="tag" placeholder="Tag" class="w-full p-1 bg-gray-700 rounded">
+                <button onclick="addLink()" class="bg-cyan-500 w-full py-1 rounded">Add</button>
+            </div>
+        </div>
+
+        <!-- TODO COLUMN -->
+        <div class="bg-gray-800 rounded-xl p-3 w-80 flex-shrink-0">
+            <h2 class="font-bold mb-2">Todo</h2>
+            <ul id="todo" class="space-y-2 min-h-[300px]"></ul>
+            <input id="taskInput" placeholder="Add task" class="w-full p-2 bg-gray-700 mt-2 rounded">
+            <button onclick="addTask()" class="bg-green-500 w-full py-1 mt-1 rounded">Add</button>
+        </div>
+
+        <!-- DONE COLUMN -->
+        <div class="bg-gray-800 rounded-xl p-3 w-80 flex-shrink-0">
+            <h2 class="font-bold mb-2">Done</h2>
+            <ul id="done" class="space-y-2 min-h-[300px]"></ul>
+        </div>
+
+        <!-- PRODUCTIVITY COLUMN -->
+        <div class="bg-gray-800 rounded-xl p-3 w-80 flex-shrink-0">
+            <h2 class="font-bold mb-2">Productivity</h2>
+
+            <div class="mb-3">
+                <h3 class="text-sm">Pomodoro</h3>
+                <div class="flex justify-between items-center">
+                    <span id="timer" class="text-lg font-bold">25:00</span>
+                    <button onclick="startTimer()" class="bg-red-500 px-2 rounded">Start</button>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <h3 class="text-sm">Notes</h3>
+                <textarea id="notes" class="w-full bg-gray-700 rounded p-1"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <h3 class="text-sm">Planner</h3>
+                <input id="planner" class="w-full bg-gray-700 rounded p-1">
+            </div>
+
+            <div>
+                <h3 class="text-sm">Analytics</h3>
+                <p id="timeSpent">0 min</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const get = (k) => JSON.parse(localStorage.getItem(k)) || [];
+        const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+        // LINKS
+        let links = get('links');
+        function renderLinks() {
+            let html = '';
+            links.forEach((l, i) => {
+                html += `<div class="card bg-gray-700 p-2 rounded flex justify-between">
+                    <div>
+                        <div>${l.name}</div>
+                        <div class="text-xs text-gray-400">${l.tag}</div>
+                    </div>
+                    <div>
+                        <a href="${l.url}" target="_blank">🔗</a>
+                        <button onclick="delLink(${i})">❌</button>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('links').innerHTML = html;
+        }
+        function addLink() {
+            links.push({ name: name.value, url: url.value, tag: tag.value });
+            set('links', links); renderLinks();
+        }
+        function delLink(i) { links.splice(i, 1); set('links', links); renderLinks(); }
+
+        // TASKS
+        let tasks = get('tasks');
+        function renderTasks() {
+            let todo = '', done = '';
+            tasks.forEach((t, i) => {
+                let el = `<li draggable="true" ondragstart="drag(event,${i})" class="card bg-gray-700 p-2 rounded cursor-move">${t.text}</li>`;
+                t.done ? done += el : todo += el;
+            });
+            document.getElementById('todo').innerHTML = todo;
+            document.getElementById('done').innerHTML = done;
+        }
+        function addTask() { tasks.push({ text: taskInput.value, done: false }); set('tasks', tasks); renderTasks(); }
+
+        function drag(ev, i) { ev.dataTransfer.setData("i", i); }
+        function allowDrop(ev) { ev.preventDefault(); }
+        function dropDone(ev) { let i = ev.dataTransfer.getData("i"); tasks[i].done = true; set('tasks', tasks); renderTasks(); }
+        function dropTodo(ev) { let i = ev.dataTransfer.getData("i"); tasks[i].done = false; set('tasks', tasks); renderTasks(); }
+
+        document.getElementById('done').ondragover = allowDrop;
+        document.getElementById('done').ondrop = dropDone;
+        document.getElementById('todo').ondragover = allowDrop;
+        document.getElementById('todo').ondrop = dropTodo;
+
+        // TIMER
+        let time = 1500, interval, focus = 0;
+        function startTimer() {
+            clearInterval(interval);
+            interval = setInterval(() => {
+                time--; focus++;
+                let m = Math.floor(time / 60), s = time % 60;
+                timer.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+                timeSpent.innerText = `${Math.floor(focus / 60)} min`;
+                if (time <= 0) clearInterval(interval);
+            }, 1000);
+        }
+
+        // NOTES
+        notes.value = localStorage.getItem('notes') || '';
+        notes.oninput = () => localStorage.setItem('notes', notes.value);
+
+        // SHORTCUTS
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === 'k') search.focus();
+            if (e.ctrlKey && e.key === 'n') taskInput.focus();
+        });
+
+        renderLinks(); renderTasks();
+    </script>
+
+</body>
+
+</html>
