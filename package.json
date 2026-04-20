@@ -1,0 +1,11 @@
+{
+  "name": "all-in-one",
+  "version": "1.0.0",
+  "description": "Productivity dashboard with Trello-style UI",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  }
+}
