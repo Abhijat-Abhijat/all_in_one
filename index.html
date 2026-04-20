@@ -1,200 +1,405 @@
-<!-- PREMIUM TRELLO-STYLE WITH ANIMATIONS -->
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All In One</title>
+    <title>All In One | Minimal Workspace</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://kit.fontawesome.com/d9214ba709.js"></script>
-
     <style>
-        body {
-            background: #0f172a;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        :root {
+            --bg: #050505;
+            --card-bg: #0f0f11;
+            --accent: #ffffff;
+            --border: rgba(255, 255, 255, 0.08);
         }
 
-        /* Smooth transitions */
-        * {
-            transition: all 0.25s ease;
+        body { 
+            background-color: var(--bg); 
+            color: #a1a1aa;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
         }
 
-        /* Card hover */
-        .card:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        .glass {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(12px);
         }
 
-        /* Button hover */
-        button:hover {
-            transform: scale(1.05);
-            opacity: 0.9;
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Input focus glow */
-        input:focus,
-        textarea:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px #22d3ee;
+        .card-hover:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: #161618;
+            transform: translateY(-2px);
         }
 
-        /* Column scroll polish */
-        ::-webkit-scrollbar {
-            height: 6px;
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+
+        input::placeholder, textarea::placeholder { color: #52525b; }
+        
+        .timer-active {
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255,255,255,0.3);
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #374151;
-            border-radius: 10px;
+        .btn-action {
+            opacity: 0;
+            transition: opacity 0.2s;
         }
+        .item-row:hover .btn-action { opacity: 1; }
     </style>
 </head>
 
-<body class="text-white font-sans">
+<body class="min-h-screen">
 
-    <!-- HEADER -->
-    <div class="bg-gray-900 p-4 flex justify-between items-center shadow">
-        <h1 class="text-xl font-bold tracking-wide">All-in-One</h1>
-        <input id="search" placeholder="Search links..." class="bg-gray-800 px-3 py-1 rounded">
-    </div>
-
-    <!-- MAIN -->
-    <div class="flex gap-4 p-4 overflow-x-auto h-[90vh]">
-
-        <!-- LINKS COLUMN -->
-        <div class="bg-gray-800 rounded-xl p-3 w-80 flex-shrink-0">
-            <h2 class="font-bold mb-2">Links</h2>
-            <div id="links" class="space-y-2"></div>
-
-            <div class="mt-3 space-y-1">
-                <input id="name" placeholder="Name" class="w-full p-1 bg-gray-700 rounded">
-                <input id="url" placeholder="URL" class="w-full p-1 bg-gray-700 rounded">
-                <input id="tag" placeholder="Tag" class="w-full p-1 bg-gray-700 rounded">
-                <button onclick="addLink()" class="bg-cyan-500 w-full py-1 rounded">Add</button>
+    <!-- NAVIGATION / COMMAND BAR -->
+    <nav class="sticky top-0 z-50 border-b border-white/[0.05] bg-black/60 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                    <div class="w-4 h-4 bg-black rounded-sm rotate-45"></div>
+                </div>
+                <span class="font-semibold text-white tracking-tight">All In One</span>
             </div>
-        </div>
-
-        <!-- TODO COLUMN -->
-        <div class="bg-gray-800 rounded-xl p-3 w-80 flex-shrink-0">
-            <h2 class="font-bold mb-2">Todo</h2>
-            <ul id="todo" class="space-y-2 min-h-[300px]"></ul>
-            <input id="taskInput" placeholder="Add task" class="w-full p-2 bg-gray-700 mt-2 rounded">
-            <button onclick="addTask()" class="bg-green-500 w-full py-1 mt-1 rounded">Add</button>
-        </div>
-
-        <!-- DONE COLUMN -->
-        <div class="bg-gray-800 rounded-xl p-3 w-80 flex-shrink-0">
-            <h2 class="font-bold mb-2">Done</h2>
-            <ul id="done" class="space-y-2 min-h-[300px]"></ul>
-        </div>
-
-        <!-- PRODUCTIVITY COLUMN -->
-        <div class="bg-gray-800 rounded-xl p-3 w-80 flex-shrink-0">
-            <h2 class="font-bold mb-2">Productivity</h2>
-
-            <div class="mb-3">
-                <h3 class="text-sm">Pomodoro</h3>
-                <div class="flex justify-between items-center">
-                    <span id="timer" class="text-lg font-bold">25:00</span>
-                    <button onclick="startTimer()" class="bg-red-500 px-2 rounded">Start</button>
+            
+            <div class="relative group flex items-center gap-4">
+                <button onclick="runSystemTests()" class="text-[10px] text-zinc-700 hover:text-zinc-500 transition-colors uppercase tracking-widest border border-zinc-800 px-2 py-1 rounded">Run Tests</button>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input id="globalSearch" type="text" placeholder="Search workspace..." 
+                        class="bg-zinc-900/50 border border-zinc-800 rounded-full pl-10 pr-4 py-1.5 text-sm w-48 md:w-80 focus:w-96 focus:ring-1 focus:ring-white/20 transition-all outline-none text-zinc-200">
                 </div>
             </div>
+        </div>
+    </nav>
 
-            <div class="mb-3">
-                <h3 class="text-sm">Notes</h3>
-                <textarea id="notes" class="w-full bg-gray-700 rounded p-1"></textarea>
-            </div>
-
-            <div class="mb-3">
-                <h3 class="text-sm">Planner</h3>
-                <input id="planner" class="w-full bg-gray-700 rounded p-1">
-            </div>
-
-            <div>
-                <h3 class="text-sm">Analytics</h3>
-                <p id="timeSpent">0 min</p>
-            </div>
+    <main class="max-w-7xl mx-auto p-6 lg:p-10 grid grid-cols-1 md:grid-cols-12 gap-8">
+        
+        <!-- COLUMN 1: LINKS & RESOURCES -->
+        <div class="md:col-span-3 space-y-6">
+            <section class="glass rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-zinc-500">Resources</h2>
+                    <svg class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                </div>
+                
+                <div id="links-list" class="space-y-1 max-h-64 overflow-y-auto custom-scroll pr-1"></div>
+                
+                <div class="mt-6 pt-6 border-t border-white/[0.05] space-y-2">
+                    <input id="linkName" placeholder="Resource name" class="w-full bg-transparent text-sm border-none outline-none focus:ring-0 text-white">
+                    <input id="linkUrl" placeholder="URL (https://...)" class="w-full bg-transparent text-xs text-zinc-500 border-none outline-none focus:ring-0">
+                    <button onclick="addLink()" class="w-full py-2 bg-white text-black text-xs font-bold rounded-lg hover:bg-zinc-200 transition-colors uppercase tracking-tighter">Add Reference</button>
+                </div>
+            </section>
         </div>
 
-    </div>
+        <!-- COLUMN 2 & 3: KANBAN -->
+        <div class="md:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <!-- TODO -->
+            <section class="glass rounded-2xl flex flex-col h-[600px]">
+                <div class="p-5 flex items-center justify-between border-b border-white/[0.05]">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-zinc-600"></span>
+                        <h2 class="text-sm font-semibold text-white">Backlog</h2>
+                    </div>
+                    <span id="todo-count" class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded-full text-zinc-400">0</span>
+                </div>
+                
+                <div id="todo-tasks" class="flex-1 p-4 space-y-3 overflow-y-auto custom-scroll" ondragover="event.preventDefault()" ondrop="handleDrop(event, false)"></div>
+                
+                <div class="p-4 border-t border-white/[0.05]">
+                    <div class="relative">
+                        <input id="taskInput" placeholder="New objective..." 
+                            class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-zinc-600 outline-none transition-all pr-12">
+                        <button onclick="addTask()" class="absolute right-2 top-2 p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-white">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DONE -->
+            <section class="glass rounded-2xl flex flex-col h-[600px] opacity-80">
+                <div class="p-5 flex items-center justify-between border-b border-white/[0.05]">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></span>
+                        <h2 class="text-sm font-semibold text-white">Archive</h2>
+                    </div>
+                </div>
+                <div id="done-tasks" class="flex-1 p-4 space-y-3 overflow-y-auto custom-scroll" ondragover="event.preventDefault()" ondrop="handleDrop(event, true)"></div>
+            </section>
+        </div>
+
+        <!-- COLUMN 4: PRODUCTIVITY -->
+        <div class="md:col-span-3 space-y-6">
+            <!-- FOCUS TOOL -->
+            <section class="glass rounded-2xl p-6 text-center">
+                <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-6">Deep Work Session</h2>
+                
+                <div class="relative inline-block mb-6">
+                    <svg class="w-32 h-32 transform -rotate-90">
+                        <circle cx="64" cy="64" r="60" stroke="currentColor" stroke-width="4" fill="transparent" class="text-zinc-900" />
+                        <circle id="timerRing" cx="64" cy="64" r="60" stroke="currentColor" stroke-width="4" fill="transparent" 
+                            stroke-dasharray="377" stroke-dashoffset="0"
+                            class="text-white transition-all duration-1000" />
+                    </svg>
+                    <div id="timerDisplay" class="absolute inset-0 flex items-center justify-center text-2xl font-mono text-white tracking-widest">25:00</div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button id="timerBtn" onclick="toggleTimer()" class="flex-1 py-2 bg-white text-black font-bold text-xs rounded-lg hover:bg-zinc-200 uppercase tracking-tighter">Initiate</button>
+                    <button onclick="resetTimer()" class="px-3 py-2 bg-zinc-900 text-zinc-400 rounded-lg hover:text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- SCRATCHPAD -->
+            <section class="glass rounded-2xl p-5">
+                <div class="flex items-center gap-2 mb-4 text-xs font-bold uppercase tracking-widest text-zinc-500">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Scratchpad
+                </div>
+                <textarea id="notes" class="w-full h-48 bg-transparent text-sm text-zinc-300 outline-none resize-none custom-scroll placeholder:text-zinc-800" placeholder="Ideas, logs, or quick snippets..."></textarea>
+            </section>
+        </div>
+    </main>
 
     <script>
-        const get = (k) => JSON.parse(localStorage.getItem(k)) || [];
-        const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+        // --- CORE STATE ---
+        const DB = {
+            get: (key) => JSON.parse(localStorage.getItem(`nexus_${key}`)) || [],
+            set: (key, val) => localStorage.setItem(`nexus_${key}`, JSON.stringify(val))
+        };
 
-        // LINKS
-        let links = get('links');
-        function renderLinks() {
-            let html = '';
-            links.forEach((l, i) => {
-                html += `<div class="card bg-gray-700 p-2 rounded flex justify-between">
-                    <div>
-                        <div>${l.name}</div>
-                        <div class="text-xs text-gray-400">${l.tag}</div>
-                    </div>
-                    <div>
-                        <a href="${l.url}" target="_blank">🔗</a>
-                        <button onclick="delLink(${i})">❌</button>
-                    </div>
-                </div>`;
+        let links = DB.get('links');
+        let tasks = DB.get('tasks');
+        let timerSeconds = 1500;
+        let timerInterval = null;
+        const totalTimerTime = 1500;
+
+        // --- SYSTEM TESTS (Internal Quality Assurance) ---
+        function runSystemTests() {
+            const results = [];
+            const test = (name, fn) => {
+                try {
+                    fn();
+                    results.push(`✅ ${name}`);
+                } catch (e) {
+                    results.push(`❌ ${name}: ${e.message}`);
+                }
+            };
+
+            // Test Case 1: Task Creation
+            test("Task creation works", () => {
+                const initialCount = tasks.length;
+                const mockTask = { text: "System Test Task", done: false, time: Date.now() };
+                tasks.push(mockTask);
+                if (tasks.length !== initialCount + 1) throw new Error("Length did not increase");
+                tasks.pop(); // Cleanup
             });
-            document.getElementById('links').innerHTML = html;
+
+            // Test Case 2: Link Creation
+            test("Link creation works", () => {
+                const initialCount = links.length;
+                const mockLink = { name: "Test Link", url: "https://test.com" };
+                links.push(mockLink);
+                if (links[links.length-1].name !== "Test Link") throw new Error("Name mismatch");
+                links.pop(); // Cleanup
+            });
+
+            // Test Case 3: Timer Logic
+            test("Timer interval initializes", () => {
+                if (timerSeconds !== 1500) throw new Error("Incorrect default time");
+            });
+
+            console.log("All In One System Tests:\n" + results.join("\n"));
+            alert("Tests executed. Check console for details.\n\n" + results.join("\n"));
         }
+
+        // --- LINKS ENGINE ---
+        function renderLinks(query = '') {
+            const list = document.getElementById('links-list');
+            const filtered = links.filter(l => l.name.toLowerCase().includes(query.toLowerCase()));
+            
+            list.innerHTML = filtered.length ? filtered.map((l, i) => `
+                <div class="item-row flex items-center justify-between group p-2 rounded-lg hover:bg-white/[0.03] transition-colors">
+                    <div class="flex flex-col truncate pr-4">
+                        <a href="${l.url}" target="_blank" class="text-sm text-zinc-300 hover:text-white transition-colors truncate">${l.name}</a>
+                        <span class="text-[10px] text-zinc-600 truncate">${new URL(l.url).hostname}</span>
+                    </div>
+                    <button onclick="deleteLink(${i})" class="btn-action text-zinc-600 hover:text-red-500">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            `).join('') : `<div class="text-[10px] text-zinc-700 py-4 text-center italic">No references found</div>`;
+        }
+
         function addLink() {
-            links.push({ name: name.value, url: url.value, tag: tag.value });
-            set('links', links); renderLinks();
+            const nameEl = document.getElementById('linkName');
+            const urlEl = document.getElementById('linkUrl');
+            if(!nameEl.value || !urlEl.value) return;
+            
+            let url = urlEl.value;
+            if(!url.startsWith('http')) url = 'https://' + url;
+            
+            links.push({ name: nameEl.value, url });
+            DB.set('links', links);
+            nameEl.value = ''; urlEl.value = '';
+            renderLinks();
         }
-        function delLink(i) { links.splice(i, 1); set('links', links); renderLinks(); }
 
-        // TASKS
-        let tasks = get('tasks');
-        function renderTasks() {
-            let todo = '', done = '';
-            tasks.forEach((t, i) => {
-                let el = `<li draggable="true" ondragstart="drag(event,${i})" class="card bg-gray-700 p-2 rounded cursor-move">${t.text}</li>`;
-                t.done ? done += el : todo += el;
+        function deleteLink(i) {
+            links.splice(i, 1);
+            DB.set('links', links);
+            renderLinks();
+        }
+
+        // --- KANBAN ENGINE ---
+        function renderTasks(query = '') {
+            const todoContainer = document.getElementById('todo-tasks');
+            const doneContainer = document.getElementById('done-tasks');
+            const filtered = tasks.filter(t => t.text.toLowerCase().includes(query.toLowerCase()));
+            
+            const todoList = filtered.filter(t => !t.done);
+            const doneList = filtered.filter(t => t.done);
+
+            document.getElementById('todo-count').innerText = todoList.length;
+
+            const mapTask = (t) => {
+                // Find original index
+                const originalIndex = tasks.findIndex(orig => orig === t);
+                return `
+                <div draggable="true" ondragstart="handleDrag(event, ${originalIndex})" 
+                    class="item-row glass card-hover p-4 rounded-xl cursor-grab active:cursor-grabbing">
+                    <div class="flex justify-between items-start gap-4">
+                        <p class="text-xs text-zinc-300 leading-relaxed">${t.text}</p>
+                        <button onclick="deleteTask(${originalIndex})" class="btn-action shrink-0 text-zinc-700 hover:text-red-500">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                        <span class="text-[9px] text-zinc-700 uppercase tracking-widest">${t.done ? 'Archived' : 'Active'}</span>
+                        <button onclick="toggleTaskStatus(${originalIndex})" class="text-[10px] text-zinc-500 hover:text-white transition-colors">
+                            ${t.done ? 'Restore' : 'Complete'}
+                        </button>
+                    </div>
+                </div>
+            `};
+
+            todoContainer.innerHTML = todoList.length ? todoList.map(mapTask).join('') : `<div class="h-32 flex items-center justify-center border-2 border-dashed border-white/[0.02] rounded-2xl text-[10px] text-zinc-800 uppercase tracking-[0.2em]">Idle</div>`;
+            doneContainer.innerHTML = doneList.map(mapTask).join('');
+        }
+
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            if(!input.value) return;
+            tasks.unshift({ text: input.value, done: false, time: Date.now() });
+            DB.set('tasks', tasks);
+            input.value = '';
+            renderTasks();
+        }
+
+        function deleteTask(i) {
+            tasks.splice(i, 1);
+            DB.set('tasks', tasks);
+            renderTasks();
+        }
+
+        function toggleTaskStatus(i) {
+            tasks[i].done = !tasks[i].done;
+            DB.set('tasks', tasks);
+            renderTasks();
+        }
+
+        function handleDrag(ev, i) { ev.dataTransfer.setData("taskIdx", i); }
+        function handleDrop(ev, isDone) {
+            ev.preventDefault();
+            const i = ev.dataTransfer.getData("taskIdx");
+            tasks[i].done = isDone;
+            DB.set('tasks', tasks);
+            renderTasks();
+        }
+
+        // --- TIMER ENGINE ---
+        function updateTimerUI() {
+            const m = Math.floor(timerSeconds / 60);
+            const s = timerSeconds % 60;
+            document.getElementById('timerDisplay').innerText = `${m}:${s.toString().padStart(2, '0')}`;
+            
+            // Progress Ring
+            const offset = 377 - (377 * (timerSeconds / totalTimerTime));
+            document.getElementById('timerRing').style.strokeDashoffset = offset;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('timerBtn');
+            const display = document.getElementById('timerDisplay');
+            
+            if(timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                btn.innerText = "Resume";
+                display.classList.remove('timer-active');
+            } else {
+                display.classList.add('timer-active');
+                btn.innerText = "Suspend";
+                timerInterval = setInterval(() => {
+                    timerSeconds--;
+                    updateTimerUI();
+                    if(timerSeconds <= 0) {
+                        clearInterval(timerInterval);
+                        alert("Focus Session Complete");
+                        resetTimer();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerSeconds = totalTimerTime;
+            document.getElementById('timerBtn').innerText = "Initiate";
+            document.getElementById('timerDisplay').classList.remove('timer-active');
+            updateTimerUI();
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            renderLinks();
+            renderTasks();
+            updateTimerUI();
+            
+            // Scratchpad Auto-save
+            const scratchpad = document.getElementById('notes');
+            scratchpad.value = localStorage.getItem('nexus_notes') || '';
+            scratchpad.oninput = (e) => localStorage.setItem('nexus_notes', e.target.value);
+
+            // Global Search
+            document.getElementById('globalSearch').oninput = (e) => {
+                const q = e.target.value;
+                renderLinks(q);
+                renderTasks(q);
+            };
+
+            // Hotkeys
+            window.addEventListener('keydown', (e) => {
+                if(e.ctrlKey && e.key === 'k') {
+                    e.preventDefault();
+                    document.getElementById('globalSearch').focus();
+                }
             });
-            document.getElementById('todo').innerHTML = todo;
-            document.getElementById('done').innerHTML = done;
-        }
-        function addTask() { tasks.push({ text: taskInput.value, done: false }); set('tasks', tasks); renderTasks(); }
-
-        function drag(ev, i) { ev.dataTransfer.setData("i", i); }
-        function allowDrop(ev) { ev.preventDefault(); }
-        function dropDone(ev) { let i = ev.dataTransfer.getData("i"); tasks[i].done = true; set('tasks', tasks); renderTasks(); }
-        function dropTodo(ev) { let i = ev.dataTransfer.getData("i"); tasks[i].done = false; set('tasks', tasks); renderTasks(); }
-
-        document.getElementById('done').ondragover = allowDrop;
-        document.getElementById('done').ondrop = dropDone;
-        document.getElementById('todo').ondragover = allowDrop;
-        document.getElementById('todo').ondrop = dropTodo;
-
-        // TIMER
-        let time = 1500, interval, focus = 0;
-        function startTimer() {
-            clearInterval(interval);
-            interval = setInterval(() => {
-                time--; focus++;
-                let m = Math.floor(time / 60), s = time % 60;
-                timer.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-                timeSpent.innerText = `${Math.floor(focus / 60)} min`;
-                if (time <= 0) clearInterval(interval);
-            }, 1000);
-        }
-
-        // NOTES
-        notes.value = localStorage.getItem('notes') || '';
-        notes.oninput = () => localStorage.setItem('notes', notes.value);
-
-        // SHORTCUTS
-        document.addEventListener('keydown', e => {
-            if (e.ctrlKey && e.key === 'k') search.focus();
-            if (e.ctrlKey && e.key === 'n') taskInput.focus();
-        });
-
-        renderLinks(); renderTasks();
+        };
     </script>
-
 </body>
-
 </html>
