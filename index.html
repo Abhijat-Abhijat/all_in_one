@@ -3,404 +3,1306 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="description" content="A single-page workspace with tasks, saved links, a focus timer and a scratchpad. Everything is stored in your browser.">
     <title>All In One | Minimal Workspace</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='white'/><rect x='30' y='30' width='40' height='40' rx='5' fill='black' transform='rotate(45 50 50)'/></svg>">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='black'/%3E%3Crect x='32' y='32' width='36' height='36' rx='4' fill='white' transform='rotate(45 50 50)'/%3E%3C/svg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Newsreader:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        
+        /* ------------------------------------------------------------------
+           Tokens
+           ------------------------------------------------------------------ */
         :root {
-            --bg: #050505;
-            --card-bg: #0f0f11;
-            --accent: #ffffff;
-            --border: rgba(255, 255, 255, 0.08);
+            --canvas: #FBFBFA;
+            --surface: #FFFFFF;
+            --surface-2: #F7F6F3;
+            --line: #EAEAEA;
+            --ink: #111111;
+            --ink-2: #2F3437;
+            --muted: #787774;
+            --placeholder: #A8A6A1;
+
+            --red-bg: #FDEBEC;    --red-fg: #9F2F2D;
+            --blue-bg: #E1F3FE;   --blue-fg: #1F6C9F;
+            --green-bg: #EDF3EC;  --green-fg: #346538;
+            --yellow-bg: #FBF3DB; --yellow-fg: #956400;
+            --gray-bg: #F1F0EE;   --gray-fg: #787774;
+
+            --sans: 'Geist', 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            --serif: 'Newsreader', 'Lyon Text', 'Instrument Serif', Georgia, serif;
+            --mono: 'Geist Mono', 'SF Mono', 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        body { 
-            background-color: var(--bg); 
-            color: #a1a1aa;
-            font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
+        /* ------------------------------------------------------------------
+           Base
+           ------------------------------------------------------------------ */
+        *, *::before, *::after { box-sizing: border-box; }
+        [hidden] { display: none !important; }
+        html { -webkit-text-size-adjust: 100%; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--canvas);
+            color: var(--ink-2);
+            font-family: var(--sans);
+            font-size: 15px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        .glass {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            backdrop-filter: blur(12px);
+        button, input, textarea { font: inherit; color: inherit; }
+        button { cursor: pointer; }
+        ::selection { background: var(--blue-bg); color: var(--ink); }
+        :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 32px;
         }
 
-        .card-hover {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Soft warm light behind the page. Fixed, inert, almost invisible. */
+        .ambient {
+            position: fixed;
+            inset: -20%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.04;
+            background:
+                radial-gradient(40% 35% at 78% 18%, #B98A3E 0%, transparent 70%),
+                radial-gradient(35% 30% at 12% 82%, #6E7F94 0%, transparent 70%);
         }
 
-        .card-hover:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-            background: #161618;
-            transform: translateY(-2px);
+        .icon {
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex: none;
         }
 
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-
-        input::placeholder, textarea::placeholder { color: #52525b; }
-        
-        .timer-active {
-            color: #fff;
-            text-shadow: 0 0 20px rgba(255,255,255,0.3);
+        /* ------------------------------------------------------------------
+           Small parts: meta text, tags, keys, buttons, fields
+           ------------------------------------------------------------------ */
+        .meta {
+            font-family: var(--mono);
+            font-size: 11.5px;
+            line-height: 1.5;
+            letter-spacing: 0.01em;
+            color: var(--muted);
         }
 
-        .btn-action {
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            height: 20px;
+            padding: 0 8px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .tag-red    { background: var(--red-bg);    color: var(--red-fg); }
+        .tag-blue   { background: var(--blue-bg);   color: var(--blue-fg); }
+        .tag-green  { background: var(--green-bg);  color: var(--green-fg); }
+        .tag-yellow { background: var(--yellow-bg); color: var(--yellow-fg); }
+        .tag-gray   { background: var(--gray-bg);   color: var(--gray-fg); }
+
+        kbd {
+            font-family: var(--mono);
+            font-size: 11px;
+            line-height: 1;
+            padding: 3px 6px;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: var(--surface-2);
+            color: var(--muted);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 36px;
+            padding: 0 16px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1;
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--ink); color: #FFFFFF; }
+        .btn-primary:hover { background: #333333; }
+        .btn-ghost { background: transparent; color: var(--ink-2); border-color: var(--line); }
+        .btn-ghost:hover { background: var(--surface-2); }
+        .btn-sm { height: 30px; padding: 0 12px; font-size: 12px; }
+
+        .text-btn {
+            border: 0;
+            background: transparent;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--muted);
+            transition: color 0.2s ease, background-color 0.2s ease;
+        }
+        .text-btn:hover { color: var(--ink); background: var(--surface-2); }
+
+        .icon-btn {
+            flex: none;
+            display: inline-grid;
+            place-items: center;
+            width: 28px;
+            height: 28px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
             opacity: 0;
-            transition: opacity 0.2s;
+            transition: opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease;
         }
-        .item-row:hover .btn-action { opacity: 1; }
+        .task:hover .icon-btn,
+        .task:focus-within .icon-btn,
+        .link-row:hover .icon-btn,
+        .link-row:focus-within .icon-btn { opacity: 1; }
+        .icon-btn:hover { background: var(--surface-2); color: var(--red-fg); }
+        @media (hover: none) { .icon-btn { opacity: 1; } }
+
+        .field {
+            flex: 1;
+            min-width: 0;
+            height: 36px;
+            padding: 0;
+            background: transparent;
+            border: 0;
+            border-bottom: 1px solid var(--line);
+            border-radius: 0;
+            font-size: 14px;
+            color: var(--ink);
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+        .field::placeholder { color: var(--placeholder); }
+        .field:focus { border-bottom-color: var(--ink); }
+        .field.invalid { border-bottom-color: var(--red-fg); }
+        .field-error { margin: 6px 0 0; font-size: 12px; color: var(--red-fg); }
+
+        /* ------------------------------------------------------------------
+           Top bar
+           ------------------------------------------------------------------ */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(251, 251, 250, 0.82);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--line);
+        }
+        .topbar-inner {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); }
+        .brand-mark {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: var(--ink);
+            display: grid;
+            place-items: center;
+        }
+        .brand-mark::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 1.5px;
+            background: #FFFFFF;
+            transform: rotate(45deg);
+        }
+        .brand-name {
+            font-family: var(--serif);
+            font-size: 20px;
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+
+        .search { position: relative; display: flex; align-items: center; width: min(320px, 100%); }
+        .search .icon { position: absolute; left: 12px; color: var(--muted); pointer-events: none; }
+        .search input {
+            width: 100%;
+            height: 36px;
+            padding: 0 58px 0 34px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--ink);
+            outline: none;
+            transition: border-color 0.2s ease;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+        .search input::placeholder { color: var(--placeholder); }
+        .search input:focus { border-color: var(--ink); }
+        .search kbd { position: absolute; right: 8px; pointer-events: none; }
+        @media (hover: none) { .search kbd { display: none; } }
+
+        /* ------------------------------------------------------------------
+           Intro
+           ------------------------------------------------------------------ */
+        .main { position: relative; z-index: 1; }
+        .intro { max-width: 56rem; padding: 80px 0 48px; }
+        .intro h1 {
+            margin: 0;
+            font-family: var(--serif);
+            font-weight: 400;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            line-height: 1.1;
+            letter-spacing: -0.035em;
+            color: var(--ink);
+        }
+        .intro h1 em { font-style: italic; color: var(--muted); }
+        .intro .meta { margin: 20px 0 0; font-size: 12.5px; }
+
+        /* ------------------------------------------------------------------
+           Bento grid
+           ------------------------------------------------------------------ */
+        .bento {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 16px;
+            padding-bottom: 96px;
+        }
+        .card {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            padding: 28px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+        }
+        .c-backlog { grid-column: 1 / span 5; grid-row: 1 / span 2; }
+        .c-done    { grid-column: 6 / span 3; grid-row: 1 / span 2; }
+        .c-focus   { grid-column: 9 / span 4; grid-row: 1; }
+        .c-links   { grid-column: 9 / span 4; grid-row: 2; }
+        .c-notes   { grid-column: 1 / -1;     grid-row: 3; }
+        .c-notes:focus-within { border-color: #CFCFCB; }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .card-title { display: flex; align-items: center; gap: 10px; }
+        .card h2 {
+            margin: 0;
+            font-family: var(--serif);
+            font-weight: 400;
+            font-size: 1.5rem;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+        }
+
+        /* ------------------------------------------------------------------
+           Lists, tasks, links
+           ------------------------------------------------------------------ */
+        .list {
+            flex: 1;
+            min-height: 0;
+            max-height: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 0 -8px;
+            padding: 0 8px;
+            overflow-y: auto;
+            border-radius: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: #D9D8D4 transparent;
+        }
+        .list.plain { gap: 0; }
+        .c-links .list { max-height: 200px; }
+        .list.drop-target {
+            background: var(--surface-2);
+            outline: 1px dashed #CFCFCB;
+            outline-offset: -4px;
+        }
+
+        .empty {
+            flex: 1;
+            display: grid;
+            place-items: center;
+            min-height: 140px;
+            padding: 24px;
+            border: 1px dashed var(--line);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .task {
+            padding: 14px 16px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            cursor: grab;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .task:hover { border-color: #DCDCD9; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); }
+        .task:active { cursor: grabbing; }
+        .task.dragging { opacity: 0.4; }
+        .task.is-done { background: #F9F9F8; }
+        .task-text {
+            margin: 0;
+            font-size: 14.5px;
+            line-height: 1.55;
+            color: var(--ink-2);
+            overflow-wrap: anywhere;
+        }
+        .task.is-done .task-text {
+            color: var(--muted);
+            text-decoration: line-through;
+            text-decoration-color: #C9C8C4;
+        }
+        .task-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+        .task-foot .spacer { flex: 1; }
+
+        .link-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--line);
+        }
+        .link-row:last-child { border-bottom: 0; }
+        .link-main {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            color: inherit;
+            text-decoration: none;
+        }
+        .link-name {
+            font-size: 14px;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .link-main:hover .link-name {
+            text-decoration: underline;
+            text-decoration-color: #BDBDB8;
+            text-underline-offset: 3px;
+        }
+        .link-host {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .add-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--line);
+        }
+        .link-form {
+            display: grid;
+            gap: 4px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--line);
+        }
+        .link-form .btn { width: 100%; margin-top: 14px; }
+
+        /* ------------------------------------------------------------------
+           Focus timer
+           ------------------------------------------------------------------ */
+        .focus-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 28px;
+            padding: 4px 0 8px;
+        }
+        .ring { position: relative; width: 156px; height: 156px; }
+        .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .ring-track { fill: none; stroke: var(--line); stroke-width: 2; }
+        .ring-bar {
+            fill: none;
+            stroke: var(--ink);
+            stroke-width: 2;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+        }
+        .ring-time {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            font-family: var(--mono);
+            font-size: 34px;
+            font-weight: 300;
+            letter-spacing: 0.02em;
+            color: var(--ink);
+            font-variant-numeric: tabular-nums;
+        }
+        .focus-actions { display: flex; gap: 10px; width: 100%; }
+        .focus-actions .btn-primary { flex: 1; }
+
+        /* ------------------------------------------------------------------
+           Scratchpad
+           ------------------------------------------------------------------ */
+        .notes-area {
+            flex: 1;
+            width: 100%;
+            min-height: 220px;
+            padding: 0;
+            background: transparent;
+            border: 0;
+            outline: none;
+            resize: none;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--ink-2);
+        }
+        .notes-area::placeholder { color: var(--placeholder); }
+
+        /* ------------------------------------------------------------------
+           Footer and self-test
+           ------------------------------------------------------------------ */
+        .foot { position: relative; z-index: 1; border-top: 1px solid var(--line); }
+        .foot-inner {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px 32px;
+            padding-top: 28px;
+            padding-bottom: 40px;
+        }
+        .shortcuts { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+        .shortcut { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+        .foot-actions { display: flex; align-items: center; gap: 16px; }
+
+        .test-panel {
+            width: 100%;
+            padding: 20px 24px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+        }
+        .test-list { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+        .test-list li { display: flex; align-items: baseline; gap: 12px; font-size: 13px; }
+        .test-list .detail { color: var(--red-fg); font-family: var(--mono); font-size: 11.5px; }
+
+        /* ------------------------------------------------------------------
+           Motion: only transform and opacity, and only when allowed
+           ------------------------------------------------------------------ */
+        @media (prefers-reduced-motion: no-preference) {
+            .js .reveal {
+                opacity: 0;
+                transform: translateY(12px);
+                transition:
+                    opacity 600ms var(--ease) calc(var(--index, 0) * 80ms),
+                    transform 600ms var(--ease) calc(var(--index, 0) * 80ms);
+            }
+            .js .reveal.in { opacity: 1; transform: none; }
+            .task.fresh { animation: rise 500ms var(--ease) both; }
+            .ambient { animation: drift 28s ease-in-out infinite alternate; }
+        }
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: none; }
+        }
+        @keyframes drift {
+            from { transform: translate3d(-2%, -1%, 0); }
+            to   { transform: translate3d(2%, 2%, 0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1; transform: none; transition: none; }
+            .task.fresh, .ambient { animation: none; }
+            .ring-bar { transition: none; }
+        }
+
+        /* ------------------------------------------------------------------
+           Responsive
+           ------------------------------------------------------------------ */
+        @media (max-width: 1024px) {
+            .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .c-backlog, .c-done, .c-focus, .c-links { grid-column: auto; grid-row: auto; }
+            .c-notes { grid-column: 1 / -1; grid-row: auto; }
+            .list { max-height: 420px; }
+        }
+        @media (max-width: 640px) {
+            .page { padding: 0 20px; }
+            .intro { padding: 48px 0 32px; }
+            .bento { grid-template-columns: 1fr; padding-bottom: 64px; }
+            .c-notes { grid-column: auto; }
+            .card { padding: 22px; }
+            .search { flex: 1; }
+            .brand-name { display: none; }
+        }
     </style>
 </head>
 
-<body class="min-h-screen">
+<body>
+    <div class="ambient" aria-hidden="true"></div>
 
-    <!-- NAVIGATION / COMMAND BAR -->
-    <nav class="sticky top-0 z-50 border-b border-white/[0.05] bg-black/60 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <div class="w-4 h-4 bg-black rounded-sm rotate-45"></div>
-                </div>
-                <span class="font-semibold text-white tracking-tight">All In One</span>
+    <!-- Icon sprite: one stroke weight, rounded caps -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+    </svg>
+
+    <header class="topbar">
+        <div class="page topbar-inner">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span class="brand-name">All In One</span>
             </div>
-            
-            <div class="relative group flex items-center gap-4">
-                <button onclick="runSystemTests()" class="text-[10px] text-zinc-700 hover:text-zinc-500 transition-colors uppercase tracking-widest border border-zinc-800 px-2 py-1 rounded">Run Tests</button>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                        <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </div>
-                    <input id="globalSearch" type="text" placeholder="Search workspace..." 
-                        class="bg-zinc-900/50 border border-zinc-800 rounded-full pl-10 pr-4 py-1.5 text-sm w-48 md:w-80 focus:w-96 focus:ring-1 focus:ring-white/20 transition-all outline-none text-zinc-200">
-                </div>
+            <div class="search" role="search">
+                <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+                <input id="global-search" type="search" placeholder="Search tasks and resources" autocomplete="off" spellcheck="false" aria-label="Search tasks and resources">
+                <kbd id="search-kbd">Ctrl K</kbd>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <main class="max-w-7xl mx-auto p-6 lg:p-10 grid grid-cols-1 md:grid-cols-12 gap-8">
-        
-        <!-- COLUMN 1: LINKS & RESOURCES -->
-        <div class="md:col-span-3 space-y-6">
-            <section class="glass rounded-2xl p-5">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xs font-bold uppercase tracking-widest text-zinc-500">Resources</h2>
-                    <svg class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                </div>
-                
-                <div id="links-list" class="space-y-1 max-h-64 overflow-y-auto custom-scroll pr-1"></div>
-                
-                <div class="mt-6 pt-6 border-t border-white/[0.05] space-y-2">
-                    <input id="linkName" placeholder="Resource name" class="w-full bg-transparent text-sm border-none outline-none focus:ring-0 text-white">
-                    <input id="linkUrl" placeholder="URL (https://...)" class="w-full bg-transparent text-xs text-zinc-500 border-none outline-none focus:ring-0">
-                    <button onclick="addLink()" class="w-full py-2 bg-white text-black text-xs font-bold rounded-lg hover:bg-zinc-200 transition-colors uppercase tracking-tighter">Add Reference</button>
-                </div>
+    <main class="main">
+        <div class="page">
+            <section class="intro">
+                <h1 class="reveal" id="today" style="--index:0"></h1>
+                <p class="meta reveal" id="summary" style="--index:1" aria-live="polite"></p>
+                <noscript><p class="meta">This workspace needs JavaScript to run.</p></noscript>
             </section>
-        </div>
 
-        <!-- COLUMN 2 & 3: KANBAN -->
-        <div class="md:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <!-- TODO -->
-            <section class="glass rounded-2xl flex flex-col h-[600px]">
-                <div class="p-5 flex items-center justify-between border-b border-white/[0.05]">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-zinc-600"></span>
-                        <h2 class="text-sm font-semibold text-white">Backlog</h2>
+            <div class="bento">
+                <!-- Backlog -->
+                <section class="card c-backlog reveal" style="--index:2" aria-labelledby="h-backlog">
+                    <div class="card-head">
+                        <div class="card-title">
+                            <h2 id="h-backlog">Backlog</h2>
+                            <span class="tag tag-blue" id="count-todo">0</span>
+                        </div>
+                        <span class="meta">Drag to move</span>
                     </div>
-                    <span id="todo-count" class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded-full text-zinc-400">0</span>
-                </div>
-                
-                <div id="todo-tasks" class="flex-1 p-4 space-y-3 overflow-y-auto custom-scroll" ondragover="event.preventDefault()" ondrop="handleDrop(event, false)"></div>
-                
-                <div class="p-4 border-t border-white/[0.05]">
-                    <div class="relative">
-                        <input id="taskInput" placeholder="New objective..." 
-                            class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-zinc-600 outline-none transition-all pr-12">
-                        <button onclick="addTask()" class="absolute right-2 top-2 p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-white">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        </button>
+                    <div class="list" id="todo-tasks" data-zone="todo"></div>
+                    <form class="add-row" id="task-form" autocomplete="off">
+                        <input class="field" id="task-input" type="text" maxlength="200" placeholder="Add a task" aria-label="New task">
+                        <button class="btn btn-primary" type="submit">Add</button>
+                    </form>
+                </section>
+
+                <!-- Archive -->
+                <section class="card c-done reveal" style="--index:3" aria-labelledby="h-archive">
+                    <div class="card-head">
+                        <div class="card-title">
+                            <h2 id="h-archive">Archive</h2>
+                            <span class="tag tag-green" id="count-done">0</span>
+                        </div>
                     </div>
-                </div>
-            </section>
+                    <div class="list" id="done-tasks" data-zone="done"></div>
+                </section>
 
-            <!-- DONE -->
-            <section class="glass rounded-2xl flex flex-col h-[600px] opacity-80">
-                <div class="p-5 flex items-center justify-between border-b border-white/[0.05]">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></span>
-                        <h2 class="text-sm font-semibold text-white">Archive</h2>
+                <!-- Focus -->
+                <section class="card c-focus reveal" style="--index:4" aria-labelledby="h-focus">
+                    <div class="card-head">
+                        <div class="card-title">
+                            <h2 id="h-focus">Focus</h2>
+                        </div>
+                        <span class="tag tag-gray" id="timer-state">Idle</span>
                     </div>
-                </div>
-                <div id="done-tasks" class="flex-1 p-4 space-y-3 overflow-y-auto custom-scroll" ondragover="event.preventDefault()" ondrop="handleDrop(event, true)"></div>
-            </section>
-        </div>
+                    <div class="focus-body">
+                        <div class="ring" role="timer" aria-label="Focus timer">
+                            <svg viewBox="0 0 156 156" aria-hidden="true">
+                                <circle class="ring-track" cx="78" cy="78" r="70"></circle>
+                                <circle class="ring-bar" id="ring-bar" cx="78" cy="78" r="70"></circle>
+                            </svg>
+                            <div class="ring-time" id="timer-display">25:00</div>
+                        </div>
+                        <div class="focus-actions">
+                            <button class="btn btn-primary" id="timer-toggle" type="button" data-action="timer-toggle">Start</button>
+                            <button class="btn btn-ghost" type="button" data-action="timer-reset">Reset</button>
+                        </div>
+                    </div>
+                </section>
 
-        <!-- COLUMN 4: PRODUCTIVITY -->
-        <div class="md:col-span-3 space-y-6">
-            <!-- FOCUS TOOL -->
-            <section class="glass rounded-2xl p-6 text-center">
-                <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-6">Deep Work Session</h2>
-                
-                <div class="relative inline-block mb-6">
-                    <svg class="w-32 h-32 transform -rotate-90">
-                        <circle cx="64" cy="64" r="60" stroke="currentColor" stroke-width="4" fill="transparent" class="text-zinc-900" />
-                        <circle id="timerRing" cx="64" cy="64" r="60" stroke="currentColor" stroke-width="4" fill="transparent" 
-                            stroke-dasharray="377" stroke-dashoffset="0"
-                            class="text-white transition-all duration-1000" />
-                    </svg>
-                    <div id="timerDisplay" class="absolute inset-0 flex items-center justify-center text-2xl font-mono text-white tracking-widest">25:00</div>
-                </div>
+                <!-- Resources -->
+                <section class="card c-links reveal" style="--index:5" aria-labelledby="h-links">
+                    <div class="card-head">
+                        <div class="card-title">
+                            <h2 id="h-links">Resources</h2>
+                            <span class="tag tag-gray" id="count-links">0</span>
+                        </div>
+                    </div>
+                    <div class="list plain" id="links-list"></div>
+                    <form class="link-form" id="link-form" autocomplete="off" novalidate>
+                        <input class="field" id="link-name" type="text" maxlength="80" placeholder="Name, for example Project board" aria-label="Resource name">
+                        <input class="field" id="link-url" type="text" inputmode="url" placeholder="Address, for example github.com" aria-label="Resource address">
+                        <p class="field-error" id="link-error" role="alert" hidden></p>
+                        <button class="btn btn-primary" type="submit">Add resource</button>
+                    </form>
+                </section>
 
-                <div class="flex gap-2">
-                    <button id="timerBtn" onclick="toggleTimer()" class="flex-1 py-2 bg-white text-black font-bold text-xs rounded-lg hover:bg-zinc-200 uppercase tracking-tighter">Initiate</button>
-                    <button onclick="resetTimer()" class="px-3 py-2 bg-zinc-900 text-zinc-400 rounded-lg hover:text-white transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    </button>
-                </div>
-            </section>
-
-            <!-- SCRATCHPAD -->
-            <section class="glass rounded-2xl p-5">
-                <div class="flex items-center gap-2 mb-4 text-xs font-bold uppercase tracking-widest text-zinc-500">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    Scratchpad
-                </div>
-                <textarea id="notes" class="w-full h-48 bg-transparent text-sm text-zinc-300 outline-none resize-none custom-scroll placeholder:text-zinc-800" placeholder="Ideas, logs, or quick snippets..."></textarea>
-            </section>
+                <!-- Scratchpad -->
+                <section class="card c-notes reveal" style="--index:6" aria-labelledby="h-notes">
+                    <div class="card-head">
+                        <div class="card-title">
+                            <h2 id="h-notes">Scratchpad</h2>
+                        </div>
+                        <span class="meta" id="notes-status">Autosaves in this browser</span>
+                    </div>
+                    <textarea class="notes-area" id="notes" placeholder="Ideas, logs or quick snippets" aria-label="Scratchpad"></textarea>
+                </section>
+            </div>
         </div>
     </main>
 
+    <footer class="foot">
+        <div class="page foot-inner">
+            <div class="shortcuts">
+                <span class="shortcut"><span id="kbd-search"><kbd>Ctrl</kbd> <kbd>K</kbd></span> Search</span>
+                <span class="shortcut"><kbd>Enter</kbd> Add</span>
+                <span class="shortcut"><kbd>Esc</kbd> Clear search</span>
+            </div>
+            <div class="foot-actions">
+                <span class="meta">Data stays in this browser.</span>
+                <button class="btn btn-ghost btn-sm" type="button" data-action="self-test">Run self-test</button>
+            </div>
+            <div class="test-panel" id="test-panel" hidden>
+                <p class="meta" id="test-summary"></p>
+                <ul class="test-list" id="test-list"></ul>
+            </div>
+        </div>
+    </footer>
+
     <script>
-        // --- CORE STATE ---
-        const DB = {
-            get: (key) => JSON.parse(localStorage.getItem(`nexus_${key}`)) || [],
-            set: (key, val) => localStorage.setItem(`nexus_${key}`, JSON.stringify(val))
-        };
+    (() => {
+        'use strict';
 
-        let links = DB.get('links');
-        let tasks = DB.get('tasks');
-        let timerSeconds = 1500;
-        let timerInterval = null;
-        const totalTimerTime = 1500;
+        // Added by script rather than markup, so a script error never leaves content hidden.
+        document.documentElement.classList.add('js');
 
-        // --- SYSTEM TESTS (Internal Quality Assurance) ---
-        function runSystemTests() {
-            const results = [];
-            const test = (name, fn) => {
-                try {
-                    fn();
-                    results.push(`✅ ${name}`);
-                } catch (e) {
-                    results.push(`❌ ${name}: ${e.message}`);
-                }
-            };
+        const $ = (selector) => document.querySelector(selector);
 
-            // Test Case 1: Task Creation
-            test("Task creation works", () => {
-                const initialCount = tasks.length;
-                const mockTask = { text: "System Test Task", done: false, time: Date.now() };
-                tasks.push(mockTask);
-                if (tasks.length !== initialCount + 1) throw new Error("Length did not increase");
-                tasks.pop(); // Cleanup
-            });
+        const TITLE_SHORT = 'All In One';
+        const FOCUS_SECONDS = 25 * 60;
+        const RING_RADIUS = 70;
+        const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
-            // Test Case 2: Link Creation
-            test("Link creation works", () => {
-                const initialCount = links.length;
-                const mockLink = { name: "Test Link", url: "https://test.com" };
-                links.push(mockLink);
-                if (links[links.length-1].name !== "Test Link") throw new Error("Name mismatch");
-                links.pop(); // Cleanup
-            });
+        /* ----------------------------------------------------------------
+           Pure helpers (covered by the self-test)
+           ---------------------------------------------------------------- */
+        const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+        const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (c) => ESCAPES[c]);
 
-            // Test Case 3: Timer Logic
-            test("Timer interval initializes", () => {
-                if (timerSeconds !== 1500) throw new Error("Incorrect default time");
-            });
+        const uid = () =>
+            (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 
-            console.log("All In One System Tests:\n" + results.join("\n"));
-            alert("Tests executed. Check console for details.\n\n" + results.join("\n"));
-        }
-
-        // --- LINKS ENGINE ---
-        function renderLinks(query = '') {
-            const list = document.getElementById('links-list');
-            const filtered = links.filter(l => l.name.toLowerCase().includes(query.toLowerCase()));
-            
-            list.innerHTML = filtered.length ? filtered.map((l, i) => `
-                <div class="item-row flex items-center justify-between group p-2 rounded-lg hover:bg-white/[0.03] transition-colors">
-                    <div class="flex flex-col truncate pr-4">
-                        <a href="${l.url}" target="_blank" class="text-sm text-zinc-300 hover:text-white transition-colors truncate">${l.name}</a>
-                        <span class="text-[10px] text-zinc-600 truncate">${new URL(l.url).hostname}</span>
-                    </div>
-                    <button onclick="deleteLink(${i})" class="btn-action text-zinc-600 hover:text-red-500">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-            `).join('') : `<div class="text-[10px] text-zinc-700 py-4 text-center italic">No references found</div>`;
-        }
-
-        function addLink() {
-            const nameEl = document.getElementById('linkName');
-            const urlEl = document.getElementById('linkUrl');
-            if(!nameEl.value || !urlEl.value) return;
-            
-            let url = urlEl.value;
-            if(!url.startsWith('http')) url = 'https://' + url;
-            
-            links.push({ name: nameEl.value, url });
-            DB.set('links', links);
-            nameEl.value = ''; urlEl.value = '';
-            renderLinks();
-        }
-
-        function deleteLink(i) {
-            links.splice(i, 1);
-            DB.set('links', links);
-            renderLinks();
-        }
-
-        // --- KANBAN ENGINE ---
-        function renderTasks(query = '') {
-            const todoContainer = document.getElementById('todo-tasks');
-            const doneContainer = document.getElementById('done-tasks');
-            const filtered = tasks.filter(t => t.text.toLowerCase().includes(query.toLowerCase()));
-            
-            const todoList = filtered.filter(t => !t.done);
-            const doneList = filtered.filter(t => t.done);
-
-            document.getElementById('todo-count').innerText = todoList.length;
-
-            const mapTask = (t) => {
-                // Find original index
-                const originalIndex = tasks.findIndex(orig => orig === t);
-                return `
-                <div draggable="true" ondragstart="handleDrag(event, ${originalIndex})" 
-                    class="item-row glass card-hover p-4 rounded-xl cursor-grab active:cursor-grabbing">
-                    <div class="flex justify-between items-start gap-4">
-                        <p class="text-xs text-zinc-300 leading-relaxed">${t.text}</p>
-                        <button onclick="deleteTask(${originalIndex})" class="btn-action shrink-0 text-zinc-700 hover:text-red-500">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </div>
-                    <div class="mt-3 flex items-center justify-between">
-                        <span class="text-[9px] text-zinc-700 uppercase tracking-widest">${t.done ? 'Archived' : 'Active'}</span>
-                        <button onclick="toggleTaskStatus(${originalIndex})" class="text-[10px] text-zinc-500 hover:text-white transition-colors">
-                            ${t.done ? 'Restore' : 'Complete'}
-                        </button>
-                    </div>
-                </div>
-            `};
-
-            todoContainer.innerHTML = todoList.length ? todoList.map(mapTask).join('') : `<div class="h-32 flex items-center justify-center border-2 border-dashed border-white/[0.02] rounded-2xl text-[10px] text-zinc-800 uppercase tracking-[0.2em]">Idle</div>`;
-            doneContainer.innerHTML = doneList.map(mapTask).join('');
-        }
-
-        function addTask() {
-            const input = document.getElementById('taskInput');
-            if(!input.value) return;
-            tasks.unshift({ text: input.value, done: false, time: Date.now() });
-            DB.set('tasks', tasks);
-            input.value = '';
-            renderTasks();
-        }
-
-        function deleteTask(i) {
-            tasks.splice(i, 1);
-            DB.set('tasks', tasks);
-            renderTasks();
-        }
-
-        function toggleTaskStatus(i) {
-            tasks[i].done = !tasks[i].done;
-            DB.set('tasks', tasks);
-            renderTasks();
-        }
-
-        function handleDrag(ev, i) { ev.dataTransfer.setData("taskIdx", i); }
-        function handleDrop(ev, isDone) {
-            ev.preventDefault();
-            const i = ev.dataTransfer.getData("taskIdx");
-            tasks[i].done = isDone;
-            DB.set('tasks', tasks);
-            renderTasks();
-        }
-
-        // --- TIMER ENGINE ---
-        function updateTimerUI() {
-            const m = Math.floor(timerSeconds / 60);
-            const s = timerSeconds % 60;
-            document.getElementById('timerDisplay').innerText = `${m}:${s.toString().padStart(2, '0')}`;
-            
-            // Progress Ring
-            const offset = 377 - (377 * (timerSeconds / totalTimerTime));
-            document.getElementById('timerRing').style.strokeDashoffset = offset;
-        }
-
-        function toggleTimer() {
-            const btn = document.getElementById('timerBtn');
-            const display = document.getElementById('timerDisplay');
-            
-            if(timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-                btn.innerText = "Resume";
-                display.classList.remove('timer-active');
-            } else {
-                display.classList.add('timer-active');
-                btn.innerText = "Suspend";
-                timerInterval = setInterval(() => {
-                    timerSeconds--;
-                    updateTimerUI();
-                    if(timerSeconds <= 0) {
-                        clearInterval(timerInterval);
-                        alert("Focus Session Complete");
-                        resetTimer();
-                    }
-                }, 1000);
+        // Returns a normalized http(s) URL, or null when the input is not a usable web address.
+        function normalizeUrl(input) {
+            const raw = String(input == null ? '' : input).trim();
+            if (!raw) return null;
+            const hasSlashes = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw);
+            // "javascript:", "mailto:" and similar: a scheme without slashes (but not host:port).
+            if (!hasSlashes && /^[a-z][a-z0-9+.-]*:(?!\d)/i.test(raw)) return null;
+            try {
+                const url = new URL(hasSlashes ? raw : 'https://' + raw);
+                if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+                return url.href;
+            } catch (_) {
+                return null;
             }
         }
 
-        function resetTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            timerSeconds = totalTimerTime;
-            document.getElementById('timerBtn').innerText = "Initiate";
-            document.getElementById('timerDisplay').classList.remove('timer-active');
-            updateTimerUI();
+        function hostnameOf(url) {
+            try { return new URL(url).hostname.replace(/^www\./, ''); }
+            catch (_) { return ''; }
         }
 
-        // --- INITIALIZATION ---
-        window.onload = () => {
+        const matchesQuery = (haystack, query) => {
+            const q = String(query == null ? '' : query).trim().toLowerCase();
+            return !q || String(haystack).toLowerCase().includes(q);
+        };
+
+        function formatClock(totalSeconds) {
+            const s = Math.max(0, Math.floor(totalSeconds));
+            return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+        }
+
+        function formatDay(timestamp) {
+            const date = new Date(timestamp);
+            if (Number.isNaN(date.getTime())) return '';
+            return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+        }
+
+        const ringOffset = (remaining) => RING_LENGTH * (1 - remaining / FOCUS_SECONDS);
+
+        function sanitizeTasks(list) {
+            if (!Array.isArray(list)) return [];
+            return list
+                .filter((t) => t && typeof t === 'object' && String(t.text == null ? '' : t.text).trim())
+                .map((t) => ({
+                    id: typeof t.id === 'string' && t.id ? t.id : uid(),
+                    text: String(t.text).trim(),
+                    done: Boolean(t.done),
+                    time: Number(t.time) || Date.now()
+                }));
+        }
+
+        function sanitizeLinks(list) {
+            if (!Array.isArray(list)) return [];
+            return list.map((l) => {
+                if (!l || typeof l !== 'object') return null;
+                const url = normalizeUrl(l.url);
+                if (!url) return null;
+                return {
+                    id: typeof l.id === 'string' && l.id ? l.id : uid(),
+                    name: String(l.name == null ? '' : l.name).trim() || hostnameOf(url),
+                    url
+                };
+            }).filter(Boolean);
+        }
+
+        /* ----------------------------------------------------------------
+           Storage: localStorage with an in-memory fallback.
+           Keys keep the original "nexus_" prefix so existing data carries over.
+           ---------------------------------------------------------------- */
+        const memory = new Map();
+        const PREFIX = 'nexus_';
+        const store = {
+            json(key, fallback) {
+                try {
+                    const raw = localStorage.getItem(PREFIX + key);
+                    if (raw !== null) return JSON.parse(raw);
+                } catch (_) { /* unreadable or unavailable */ }
+                return memory.has(key) ? memory.get(key) : fallback;
+            },
+            saveJson(key, value) {
+                memory.set(key, value);
+                try { localStorage.setItem(PREFIX + key, JSON.stringify(value)); return true; }
+                catch (_) { return false; }
+            },
+            text(key) {
+                try {
+                    const raw = localStorage.getItem(PREFIX + key);
+                    if (raw !== null) return raw;
+                } catch (_) { /* unavailable */ }
+                return memory.has(key) ? memory.get(key) : '';
+            },
+            saveText(key, value) {
+                memory.set(key, value);
+                try { localStorage.setItem(PREFIX + key, value); return true; }
+                catch (_) { return false; }
+            },
+            remove(key) {
+                memory.delete(key);
+                try { localStorage.removeItem(PREFIX + key); } catch (_) { /* ignore */ }
+            }
+        };
+
+        /* ----------------------------------------------------------------
+           State
+           ---------------------------------------------------------------- */
+        let links = sanitizeLinks(store.json('links', []));
+        let tasks = sanitizeTasks(store.json('tasks', []));
+        let query = '';
+        let freshId = null;
+
+        const els = {
+            today: $('#today'),
+            summary: $('#summary'),
+            search: $('#global-search'),
+            searchKbd: $('#search-kbd'),
+            kbdSearch: $('#kbd-search'),
+            todoList: $('#todo-tasks'),
+            doneList: $('#done-tasks'),
+            countTodo: $('#count-todo'),
+            countDone: $('#count-done'),
+            taskForm: $('#task-form'),
+            taskInput: $('#task-input'),
+            linksList: $('#links-list'),
+            countLinks: $('#count-links'),
+            linkForm: $('#link-form'),
+            linkName: $('#link-name'),
+            linkUrl: $('#link-url'),
+            linkError: $('#link-error'),
+            timerDisplay: $('#timer-display'),
+            timerState: $('#timer-state'),
+            timerToggle: $('#timer-toggle'),
+            ringBar: $('#ring-bar'),
+            notes: $('#notes'),
+            notesStatus: $('#notes-status'),
+            testPanel: $('#test-panel'),
+            testSummary: $('#test-summary'),
+            testList: $('#test-list')
+        };
+
+        const icon = (name) => '<svg class="icon" aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
+
+        /* ----------------------------------------------------------------
+           Rendering
+           ---------------------------------------------------------------- */
+        function renderToday() {
+            const now = new Date();
+            const weekday = now.toLocaleDateString(undefined, { weekday: 'long' });
+            const rest = now.toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
+            els.today.innerHTML = escapeHtml(weekday) + ', <em>' + escapeHtml(rest) + '</em>';
+        }
+
+        function renderSummary() {
+            const open = tasks.filter((t) => !t.done).length;
+            const done = tasks.length - open;
+            const taskPart = tasks.length ? open + ' open, ' + done + ' done' : 'No tasks yet';
+            const linkPart = links.length + (links.length === 1 ? ' resource' : ' resources');
+            els.summary.textContent = taskPart + ' \u00B7 ' + linkPart;
+        }
+
+        const emptyState = (text) => '<div class="empty">' + escapeHtml(text) + '</div>';
+
+        function linkRow(link) {
+            const id = escapeHtml(link.id);
+            return '<div class="link-row">' +
+                '<a class="link-main" href="' + escapeHtml(link.url) + '" target="_blank" rel="noopener noreferrer">' +
+                    '<span class="link-name">' + escapeHtml(link.name) + '</span>' +
+                    '<span class="link-host">' + escapeHtml(hostnameOf(link.url)) + '</span>' +
+                '</a>' +
+                '<button type="button" class="icon-btn" data-action="delete-link" data-id="' + id + '" aria-label="Remove ' + escapeHtml(link.name) + '">' + icon('x') + '</button>' +
+            '</div>';
+        }
+
+        function renderLinks() {
+            const shown = links.filter((l) => matchesQuery(l.name + ' ' + l.url, query));
+            els.countLinks.textContent = shown.length;
+            els.linksList.innerHTML = shown.length
+                ? shown.map(linkRow).join('')
+                : emptyState(links.length ? 'No resources match your search.' : 'Nothing saved yet. Add the pages you keep returning to.');
+        }
+
+        function taskCard(task) {
+            const id = escapeHtml(task.id);
+            return '<article class="task' + (task.done ? ' is-done' : '') + (task.id === freshId ? ' fresh' : '') + '" draggable="true" data-id="' + id + '">' +
+                '<p class="task-text">' + escapeHtml(task.text) + '</p>' +
+                '<div class="task-foot">' +
+                    '<span class="tag ' + (task.done ? 'tag-green' : 'tag-yellow') + '">' + (task.done ? 'Done' : 'Open') + '</span>' +
+                    '<span class="meta">' + escapeHtml(formatDay(task.time)) + '</span>' +
+                    '<span class="spacer"></span>' +
+                    '<button type="button" class="text-btn" data-action="toggle-task" data-id="' + id + '">' + (task.done ? 'Restore' : 'Complete') + '</button>' +
+                    '<button type="button" class="icon-btn" data-action="delete-task" data-id="' + id + '" aria-label="Delete task">' + icon('x') + '</button>' +
+                '</div>' +
+            '</article>';
+        }
+
+        function renderTasks() {
+            const visible = tasks.filter((t) => matchesQuery(t.text, query));
+            const open = visible.filter((t) => !t.done);
+            const done = visible.filter((t) => t.done);
+
+            els.countTodo.textContent = open.length;
+            els.countDone.textContent = done.length;
+
+            els.todoList.innerHTML = open.length
+                ? open.map(taskCard).join('')
+                : emptyState(query ? 'No open tasks match your search.' : 'Nothing queued. Add a task below.');
+            els.doneList.innerHTML = done.length
+                ? done.map(taskCard).join('')
+                : emptyState(query ? 'No finished tasks match your search.' : 'Finished tasks collect here.');
+
+            freshId = null;
+            renderSummary();
+        }
+
+        /* ----------------------------------------------------------------
+           Tasks
+           ---------------------------------------------------------------- */
+        const saveTasks = () => store.saveJson('tasks', tasks);
+        const saveLinks = () => store.saveJson('links', links);
+
+        function clearSearch() {
+            els.search.value = '';
+            query = '';
             renderLinks();
             renderTasks();
-            updateTimerUI();
-            
-            // Scratchpad Auto-save
-            const scratchpad = document.getElementById('notes');
-            scratchpad.value = localStorage.getItem('nexus_notes') || '';
-            scratchpad.oninput = (e) => localStorage.setItem('nexus_notes', e.target.value);
+        }
 
-            // Global Search
-            document.getElementById('globalSearch').oninput = (e) => {
-                const q = e.target.value;
-                renderLinks(q);
-                renderTasks(q);
+        function addTask(text) {
+            const task = { id: uid(), text, done: false, time: Date.now() };
+            tasks.unshift(task);
+            freshId = task.id;
+            saveTasks();
+            if (query && !matchesQuery(text, query)) clearSearch(); else renderTasks();
+        }
+
+        function setTaskDone(id, done) {
+            const task = tasks.find((t) => t.id === id);
+            if (!task || task.done === done) return;
+            task.done = done;
+            saveTasks();
+            renderTasks();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter((t) => t.id !== id);
+            saveTasks();
+            renderTasks();
+        }
+
+        els.taskForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const text = els.taskInput.value.trim();
+            if (!text) { els.taskInput.focus(); return; }
+            addTask(text);
+            els.taskInput.value = '';
+            els.taskInput.focus();
+        });
+
+        /* Drag and drop between Backlog and Archive */
+        document.addEventListener('dragstart', (event) => {
+            const card = event.target.closest && event.target.closest('.task');
+            if (!card) return;
+            event.dataTransfer.setData('text/plain', card.dataset.id);
+            event.dataTransfer.effectAllowed = 'move';
+            card.classList.add('dragging');
+        });
+        document.addEventListener('dragend', () => {
+            document.querySelectorAll('.dragging').forEach((el) => el.classList.remove('dragging'));
+            document.querySelectorAll('.drop-target').forEach((el) => el.classList.remove('drop-target'));
+        });
+        [els.todoList, els.doneList].forEach((zone) => {
+            zone.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                zone.classList.add('drop-target');
+            });
+            zone.addEventListener('dragleave', (event) => {
+                if (!zone.contains(event.relatedTarget)) zone.classList.remove('drop-target');
+            });
+            zone.addEventListener('drop', (event) => {
+                event.preventDefault();
+                zone.classList.remove('drop-target');
+                setTaskDone(event.dataTransfer.getData('text/plain'), zone.dataset.zone === 'done');
+            });
+        });
+
+        /* ----------------------------------------------------------------
+           Resources
+           ---------------------------------------------------------------- */
+        function showLinkError(message) {
+            els.linkError.textContent = message;
+            els.linkError.hidden = !message;
+            els.linkUrl.classList.toggle('invalid', Boolean(message));
+        }
+
+        els.linkForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const url = normalizeUrl(els.linkUrl.value);
+            if (!url) {
+                showLinkError('Enter a web address, for example github.com');
+                els.linkUrl.focus();
+                return;
+            }
+            const name = els.linkName.value.trim() || hostnameOf(url);
+            links.push({ id: uid(), name, url });
+            saveLinks();
+            els.linkName.value = '';
+            els.linkUrl.value = '';
+            showLinkError('');
+            if (query && !matchesQuery(name + ' ' + url, query)) clearSearch(); else { renderLinks(); renderSummary(); }
+            els.linkName.focus();
+        });
+        els.linkUrl.addEventListener('input', () => showLinkError(''));
+
+        function deleteLink(id) {
+            links = links.filter((l) => l.id !== id);
+            saveLinks();
+            renderLinks();
+            renderSummary();
+        }
+
+        /* ----------------------------------------------------------------
+           Focus timer (based on a deadline, so it stays correct in background tabs)
+           ---------------------------------------------------------------- */
+        const timer = { state: 'idle', remaining: FOCUS_SECONDS, endsAt: 0, handle: null };
+
+        const TIMER_VIEW = {
+            idle:    { label: 'Idle',     tone: 'tag-gray',   action: 'Start' },
+            running: { label: 'Running',  tone: 'tag-green',  action: 'Pause' },
+            paused:  { label: 'Paused',   tone: 'tag-yellow', action: 'Resume' },
+            done:    { label: 'Complete', tone: 'tag-blue',   action: 'Start again' }
+        };
+
+        function renderTimer() {
+            const view = TIMER_VIEW[timer.state];
+            els.timerDisplay.textContent = formatClock(timer.remaining);
+            els.ringBar.style.strokeDashoffset = ringOffset(timer.remaining).toFixed(2);
+            els.timerState.textContent = view.label;
+            els.timerState.className = 'tag ' + view.tone;
+            els.timerToggle.textContent = view.action;
+
+            if (timer.state === 'running') document.title = formatClock(timer.remaining) + ' | ' + TITLE_SHORT;
+            else if (timer.state === 'done') document.title = 'Focus complete | ' + TITLE_SHORT;
+            else document.title = baseTitle;
+        }
+
+        function chime() {
+            try {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx) return;
+                const ctx = new Ctx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = 660;
+                gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.9);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 1);
+            } catch (_) { /* audio is optional */ }
+        }
+
+        function finishTimer() {
+            clearInterval(timer.handle);
+            timer.handle = null;
+            timer.state = 'done';
+            timer.remaining = 0;
+            renderTimer();
+            chime();
+        }
+
+        function tickTimer() {
+            const left = Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000));
+            if (left !== timer.remaining) {
+                timer.remaining = left;
+                renderTimer();
+            }
+            if (left === 0) finishTimer();
+        }
+
+        function toggleTimer() {
+            if (timer.state === 'running') {
+                clearInterval(timer.handle);
+                timer.handle = null;
+                timer.remaining = Math.max(0, Math.ceil((timer.endsAt - Date.now()) / 1000));
+                if (timer.remaining === 0) { finishTimer(); return; }
+                timer.state = 'paused';
+                renderTimer();
+                return;
+            }
+            if (timer.state === 'done') timer.remaining = FOCUS_SECONDS;
+            timer.state = 'running';
+            timer.endsAt = Date.now() + timer.remaining * 1000;
+            timer.handle = setInterval(tickTimer, 250);
+            renderTimer();
+        }
+
+        function resetTimer() {
+            clearInterval(timer.handle);
+            timer.handle = null;
+            timer.state = 'idle';
+            timer.remaining = FOCUS_SECONDS;
+            renderTimer();
+        }
+
+        /* ----------------------------------------------------------------
+           Scratchpad
+           ---------------------------------------------------------------- */
+        const NOTES_IDLE = 'Autosaves in this browser';
+        let notesTimeout = null;
+
+        els.notes.value = store.text('notes');
+        els.notes.addEventListener('input', () => {
+            const saved = store.saveText('notes', els.notes.value);
+            els.notesStatus.textContent = saved ? 'Saved' : 'Not saved: browser storage is unavailable';
+            clearTimeout(notesTimeout);
+            notesTimeout = setTimeout(() => { els.notesStatus.textContent = NOTES_IDLE; }, 1600);
+        });
+
+        /* ----------------------------------------------------------------
+           Search and keyboard
+           ---------------------------------------------------------------- */
+        els.search.addEventListener('input', (event) => {
+            query = event.target.value;
+            renderLinks();
+            renderTasks();
+        });
+
+        window.addEventListener('keydown', (event) => {
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+                event.preventDefault();
+                els.search.focus();
+                els.search.select();
+            } else if (event.key === 'Escape' && document.activeElement === els.search) {
+                clearSearch();
+                els.search.blur();
+            }
+        });
+
+        /* ----------------------------------------------------------------
+           Click delegation
+           ---------------------------------------------------------------- */
+        document.addEventListener('click', (event) => {
+            const target = event.target.closest('[data-action]');
+            if (!target) return;
+            const { action, id } = target.dataset;
+            switch (action) {
+                case 'toggle-task': {
+                    const task = tasks.find((t) => t.id === id);
+                    if (task) setTaskDone(id, !task.done);
+                    break;
+                }
+                case 'delete-task': deleteTask(id); break;
+                case 'delete-link': deleteLink(id); break;
+                case 'timer-toggle': toggleTimer(); break;
+                case 'timer-reset': resetTimer(); break;
+                case 'self-test': runSelfTest(); break;
+            }
+        });
+
+        /* ----------------------------------------------------------------
+           Self-test: exercises the real helpers without touching your data
+           ---------------------------------------------------------------- */
+        function runSelfTest() {
+            const results = [];
+            const assert = (condition, message) => { if (!condition) throw new Error(message || 'Assertion failed'); };
+            const check = (name, fn) => {
+                try { fn(); results.push({ name, ok: true }); }
+                catch (error) { results.push({ name, ok: false, detail: error.message }); }
             };
 
-            // Hotkeys
-            window.addEventListener('keydown', (e) => {
-                if(e.ctrlKey && e.key === 'k') {
-                    e.preventDefault();
-                    document.getElementById('globalSearch').focus();
-                }
+            check('normalizeUrl adds https to bare domains', () =>
+                assert(normalizeUrl('example.com') === 'https://example.com/'));
+            check('normalizeUrl keeps an explicit http address', () =>
+                assert(normalizeUrl('http://example.com/a') === 'http://example.com/a'));
+            check('normalizeUrl accepts host:port', () =>
+                assert(normalizeUrl('localhost:3000') === 'http://localhost:3000/' || normalizeUrl('localhost:3000') === 'https://localhost:3000/'));
+            check('normalizeUrl rejects javascript: and mailto:', () =>
+                assert(normalizeUrl('javascript:alert(1)') === null && normalizeUrl('mailto:a@b.co') === null));
+            check('normalizeUrl rejects empty and malformed input', () =>
+                assert(normalizeUrl('') === null && normalizeUrl('   ') === null && normalizeUrl('not a url') === null));
+            check('hostnameOf strips www', () =>
+                assert(hostnameOf('https://www.example.com/path') === 'example.com'));
+            check('escapeHtml neutralizes markup', () => {
+                const out = escapeHtml('<img src=x onerror="a()">');
+                assert(!out.includes('<') && !out.includes('"'), 'unescaped characters remain');
             });
-        };
+            check('matchesQuery is case-insensitive and ignores blank queries', () =>
+                assert(matchesQuery('Write docs', 'DOC') && !matchesQuery('Write', 'x') && matchesQuery('x', '') && matchesQuery('x', '   ')));
+            check('formatClock pads minutes and seconds', () =>
+                assert(formatClock(1500) === '25:00' && formatClock(65) === '01:05' && formatClock(-4) === '00:00'));
+            check('ring is full at the start and empty at zero', () =>
+                assert(ringOffset(FOCUS_SECONDS) === 0 && Math.abs(ringOffset(0) - RING_LENGTH) < 1e-9));
+            check('sanitizeTasks drops invalid rows and assigns ids', () => {
+                const out = sanitizeTasks([{ text: 'a' }, null, { text: '  ' }, 5]);
+                assert(out.length === 1 && out[0].id && out[0].done === false);
+            });
+            check('sanitizeLinks drops unsafe addresses', () => {
+                const out = sanitizeLinks([{ name: 'ok', url: 'example.com' }, { name: 'bad', url: 'javascript:alert(1)' }]);
+                assert(out.length === 1 && out[0].url === 'https://example.com/');
+            });
+            check('storage round-trips JSON values', () => {
+                store.saveJson('selftest', { a: 1 });
+                const back = store.json('selftest', null);
+                store.remove('selftest');
+                assert(back && back.a === 1, 'value did not survive a round trip');
+            });
+
+            const passed = results.filter((r) => r.ok).length;
+            els.testSummary.textContent = passed + ' of ' + results.length + ' checks passed';
+            els.testList.innerHTML = results.map((r) =>
+                '<li><span class="tag ' + (r.ok ? 'tag-green' : 'tag-red') + '">' + (r.ok ? 'Pass' : 'Fail') + '</span>' +
+                '<span>' + escapeHtml(r.name) + (r.ok ? '' : ' <span class="detail">' + escapeHtml(r.detail) + '</span>') + '</span></li>'
+            ).join('');
+            els.testPanel.hidden = false;
+            console.log('All In One self-test: ' + passed + '/' + results.length + ' passed\n' +
+                results.map((r) => (r.ok ? 'PASS ' : 'FAIL ') + r.name + (r.ok ? '' : ': ' + r.detail)).join('\n'));
+        }
+
+        /* ----------------------------------------------------------------
+           Scroll entry
+           ---------------------------------------------------------------- */
+        function setupReveal() {
+            const items = document.querySelectorAll('.reveal');
+            if (!('IntersectionObserver' in window)) {
+                items.forEach((el) => el.classList.add('in'));
+                return;
+            }
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('in');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.08, rootMargin: '0px 0px -5% 0px' });
+            items.forEach((el) => observer.observe(el));
+        }
+
+        /* ----------------------------------------------------------------
+           Init
+           ---------------------------------------------------------------- */
+        const baseTitle = document.title;
+        const isApple = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+        if (isApple) {
+            els.searchKbd.textContent = '\u2318 K';
+            els.kbdSearch.innerHTML = '<kbd>\u2318</kbd> <kbd>K</kbd>';
+        }
+
+        setupReveal();
+        els.ringBar.setAttribute('stroke-dasharray', RING_LENGTH.toFixed(2));
+        saveTasks();
+        saveLinks();
+        renderToday();
+        renderLinks();
+        renderTasks();
+        renderTimer();
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) renderToday();
+        });
+    })();
     </script>
 </body>
 </html>
